@@ -53,7 +53,10 @@ fun PokemonScreen(
     val selectedGen = uiState.selectedGeneration
 
     // DropDown
-    val generationOptions = generationList.map { it.nameGeneration }
+    val generationOptions = generationList.map { gen ->
+        gen.url.split("/").last { it.isNotEmpty() }   // Pillar el num de la url Ej: https://pokeapi.co/api/v2/generation/3/
+    }
+
 
     /*
     // Variables para el Dropdown (UI ya resuelta)
