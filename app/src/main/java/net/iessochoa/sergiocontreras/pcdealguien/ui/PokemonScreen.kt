@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -32,25 +33,38 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import net.iessochoa.sergiocontreras.pcdealguien.data.PokemonSpecies
+import net.iessochoa.sergiocontreras.pcdealguien.network.PokemonDto
 import net.iessochoa.sergiocontreras.pcdealguien.ui.components.DynamicSelectTextField
 import net.iessochoa.sergiocontreras.pcdealguien.ui.theme.PCdeAlguienTheme
 import net.iessochoa.sergiocontreras.pcdealguien.ui.theme.Typography
 
 @Composable
-fun PokemonScreen(viewModel: PokemonViewModel = viewModel(), modifier: Modifier = Modifier) {
-    // Observamos el estado del ViewModel
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+fun PokemonScreen(
+    modifier: Modifier = Modifier,
+    uiState: PokemonScreenUiState,
+    onClickGeneration: (Int) -> Unit, //Cargar pokemon esa generación
+    onGenerationSelection: (String) -> Unit //DropDown
 
-    val pokemonList = uiState.pokemonList
+) {
+    // Lista generaciones
+    val generationList = uiState.generations
 
+    // Generación selec
+    val selectedGen = uiState.selectedGeneration
+
+    // DropDown
+    val generationOptions = generationList.map { it.nameGeneration }
+
+    /*
     // Variables para el Dropdown (UI ya resuelta)
     var expanded by remember { mutableStateOf(false) }
     var selectedGen by remember { mutableStateOf(1) }
     val generations = (1..8).toList() // 8 Generaciones
-
+    */
     Column(
-        modifier = modifier.fillMaxSize().padding(16.dp),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("Pokedex Retrofit", style = Typography.headlineMedium)
@@ -60,11 +74,9 @@ fun PokemonScreen(viewModel: PokemonViewModel = viewModel(), modifier: Modifier 
         // --- SELECTOR DE GENERACIÓN (Ya implementado) ---
         DynamicSelectTextField(
             selectedValue = selectedGen.toString(),
-            options = generations.map { it.toString() },
+            options = generationOptions,
             label = "Generación",
-            onValueChangedEvent = {
-                selectedGen = it.toInt()
-            }
+            onValueChangedEvent = onGenerationSelection
         )
 
 
@@ -73,8 +85,8 @@ fun PokemonScreen(viewModel: PokemonViewModel = viewModel(), modifier: Modifier 
         // --- BOTÓN DE BÚSQUEDA ---
         Button(
             onClick = {
-                // Llama al ViewModel
-                viewModel.fetchPokemonByGeneration(selectedGen)
+                // Se cargan los pokemons de esa gen
+                onClickGeneration(selectedGen)
             },
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -84,49 +96,82 @@ fun PokemonScreen(viewModel: PokemonViewModel = viewModel(), modifier: Modifier 
         Spacer(modifier = Modifier.height(16.dp))
 
         // --- LISTA DE RESULTADOS ---
-        LazyVerticalGrid(
-            modifier = Modifier.weight(1f),
-            columns = GridCells.Fixed(2), // 2 columnas
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(pokemonList) { pokemon ->
-                PokemonItem(pokemon)
+        when (val status = uiState.requestStatus) {
+            is RequestStatus.IsLoading ->
+                CircularProgressIndicator()
+
+            is RequestStatus.Error ->
+                Text("Error: ${status.message}")
+
+
+            is RequestStatus.Success -> {
+                LazyVerticalGrid(
+                    modifier = Modifier.weight(1f),
+                    columns = GridCells.Fixed(2),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(status.characters) { pokemon ->
+                        PokemonItem(pokemon)
+                    }
+                }
             }
+
+            is RequestStatus.Idle -> Text("Selecciona una generación y pulsa buscar")
         }
     }
+
+
+    /*
+    LazyVerticalGrid(
+        modifier = Modifier.weight(1f),
+        columns = GridCells.Fixed(2), // 2 columnas
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(pokemonList) { pokemon ->
+            PokemonItem(pokemon)
+        }
+    }
+
+     */
 }
 
+
 @Composable
-fun PokemonItem(pokemon: PokemonSpecies) {
+fun PokemonItem(pokemon: PokemonDto) {
     Card(
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(8.dp).fillMaxWidth()
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth()
         ) {
             // TODO 5: Construir la URL de la imagen
             // 1. Obtener el ID desde la URL del pokemon (pokemon.url)
             // 2. Usar: https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{id}.png
-
-            val imageUrl = "" // <-- IMPLEMENTAR AQUÍ LOGICA
+            val splitUrl = pokemon.url.split("/")
+            val pokemonId = splitUrl[splitUrl.lastIndex - 1]
+            val imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$pokemonId.png" //<-- IMPLEMENTAR AQUÍ LOGICA
 
             AsyncImage(
                 model = imageUrl,
-                contentDescription = pokemon.name,
+                contentDescription = pokemon.namePokemon,
                 modifier = Modifier.size(100.dp)
             )
 
             Text(
-                text = pokemon.name.uppercase(),
+                text = pokemon.namePokemon.uppercase(),
                 style = MaterialTheme.typography.bodyMedium
             )
         }
     }
 }
 
+/*
 @Preview(showBackground = true)
 @Composable
 fun PokemonScreenPreview() {
@@ -134,3 +179,5 @@ fun PokemonScreenPreview() {
         PokemonScreen()
     }
 }
+
+ */
