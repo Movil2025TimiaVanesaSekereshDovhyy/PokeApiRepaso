@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 // TODO 1: Crear las Data Classes según el JSON de https://pokeapi.co/api/v2/generation/{id}/
 
-@Serializable
+@Serializable //HAY 2 Response pq salen de links diferentes (2 josn diferentes)
 data class PokemonGenerationsResponse(
     // TODO: Necesitamos el nombre y la url para luego sacar el ID
     @SerialName(value = "results") val results : List<GenerationDto> //Lista pq es un array (al cerrarlo sale [..] y ya dentro {}
