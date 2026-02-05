@@ -34,7 +34,7 @@ class PokemonViewModel : ViewModel() {
                 // Ponemos el estado en Idle
                 _uiState.update { current ->
                     current.copy(
-                        generations = generations,
+                        generations = generations, //Lo tiene la ui
                         requestStatus = RequestStatus.Idle
                     )
                 }
