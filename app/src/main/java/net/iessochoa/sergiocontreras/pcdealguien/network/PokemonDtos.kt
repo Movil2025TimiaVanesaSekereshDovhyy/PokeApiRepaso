@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PokemonGenerationsResponse(
     // TODO: Necesitamos el nombre y la url para luego sacar el ID
-    @SerialName(value = "results") val results : List<GenerationDto>
+    @SerialName(value = "results") val results : List<GenerationDto> //Lista pq es un array (al cerrarlo sale [..] y ya dentro {}
 
 )
 @Serializable
@@ -29,3 +29,4 @@ data class PokemonDto(
     @SerialName(value = "name") val namePokemon: String,
     @SerialName(value = "url") val url: String
 )
+
