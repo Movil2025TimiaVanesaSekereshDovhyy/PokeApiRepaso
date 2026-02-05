@@ -27,8 +27,8 @@ object PokemonRepository {
     }
 
     suspend fun getGenerations() =
-        retrofitService.getGenerations().results
+        retrofitService.getGenerations().results //Data class del dto
 
     suspend fun getPokemonsFromGeneration(id: Int) =
-        retrofitService.getPokemons(id).pokemons
+        retrofitService.getPokemons(id).pokemons //Data class del dto
 }
